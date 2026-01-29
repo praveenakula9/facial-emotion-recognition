@@ -289,29 +289,18 @@ def image_mode(model):
                                     st.progress(prob, text=f"{emo.capitalize()}: {prob*100:.2f}%")
 
 def webcam_mode(model):
-    """Handle webcam emotion detection"""
     st.subheader("📹 Webcam - Emotion Detection")
-    
-    st.info("📌 **Two Options Available:**")
-    
-    tab1, tab2 = st.tabs(["📸 Single Frame Capture", "🎬 Real-Time Detection"])
-    
-    with tab1:
-        st.markdown("### Capture Single Frame from Webcam")
-        st.write("Click below to capture one image from your webcam for emotion analysis.")
+    camera_image = st.camera_input("📸 Capture Image from Webcam")
 
-        # ✅ MUST BE OUTSIDE BUTTON
-        camera_image = st.camera_input("📸 Capture Image from Webcam")
-
-        if camera_image is not None:
+    if camera_image is not None:
             ret = True
             image = Image.open(camera_image)
             frame = np.array(image)
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        else:
+    else:
             ret = False
 
-        if ret:
+    if ret:
             faces = detect_face(frame)
 
             col1, col2 = st.columns(2)
@@ -356,38 +345,5 @@ def webcam_mode(model):
                         sorted_emotions = sorted(emotion_probs.items(), key=lambda x: x[1], reverse=True)
                         for emo, prob in sorted_emotions:
                             st.progress(prob, text=f"{emo.capitalize()}: {prob*100:.2f}%")
-
-    
-    with tab2:
-        st.markdown("### Continuous Real-Time Detection")
-        st.write("For better performance with continuous video stream, use the standalone script:")
-        
-        st.code("python emotion.py", language="bash")
-        
-        st.markdown("""
-        **Features of emotion.py:**
-        - ⚡ Real-time face detection with MediaPipe
-        - 📊 Live emotion recognition
-        - 🎯 FPS counter
-        - 💾 Screenshot capability (press 'S')
-        - ⏸️ Pause/Resume (press SPACE)
-        - 🚪 Quit (press 'Q')
-        
-        **Usage:**
-        ```bash
-        # Default usage (automatically finds best_model.keras)
-        python emotion.py
-        
-        # Specify model
-        python emotion.py --model best_model.keras
-        
-        # High resolution
-        python emotion.py --width 1920 --height 1080
-        
-        # Use Haar Cascade (faster)
-        python emotion.py --no-mediapipe
-        ```
-        """)
-
 if __name__ == "__main__":
     main()

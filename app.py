@@ -94,10 +94,46 @@ def detect_face(image):
     else:
         gray = image
     
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=9, minSize=(60, 60))
-    faces = sorted(faces, key=lambda x: x[2]*x[3], reverse=True)[:1]
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=10, minSize=(80, 80))
     
+    faces = remove_overlaps(faces)   
     return faces
+def remove_overlaps(faces, overlapThresh=0.3):
+    if len(faces) == 0:
+        return faces
+
+    boxes = np.array([[x, y, x+w, y+h] for (x, y, w, h) in faces])
+    pick = []
+
+    x1 = boxes[:,0]
+    y1 = boxes[:,1]
+    x2 = boxes[:,2]
+    y2 = boxes[:,3]
+
+    area = (x2 - x1) * (y2 - y1)
+    idxs = np.argsort(y2)
+
+    while len(idxs) > 0:
+        last = idxs[-1]
+        pick.append(last)
+
+        xx1 = np.maximum(x1[last], x1[idxs[:-1]])
+        yy1 = np.maximum(y1[last], y1[idxs[:-1]])
+        xx2 = np.minimum(x2[last], x2[idxs[:-1]])
+        yy2 = np.minimum(y2[last], y2[idxs[:-1]])
+
+        w = np.maximum(0, xx2 - xx1)
+        h = np.maximum(0, yy2 - yy1)
+
+        overlap = (w * h) / area[idxs[:-1]]
+
+        idxs = np.delete(
+            idxs,
+            np.concatenate(([len(idxs)-1],
+            np.where(overlap > overlapThresh)[0]))
+        )
+
+    return faces[pick]
 
 def predict_emotion(model, face_image):
     """Predict emotion from face image"""
